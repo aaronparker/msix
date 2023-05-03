@@ -42,11 +42,11 @@ process {
     $Firefox = Get-EvergreenApp @params | Where-Object { $_.Architecture -eq "x64" -and $_.Channel -eq "LATEST_FIREFOX_VERSION" -and $_.Language -eq "en-GB" -and $_.Type -eq "msix" }
     Write-Msg -Msg "Found version: $($Firefox.Version)"
     $FirefoxMsix = $Firefox | Save-EvergreenApp -Path "E:\Temp\Firefox"
-    Write-Msg -Msg "Saved to: $($FirefoxMsix.FullName)"
+    Write-Msg -Msg "Saved to: '$($FirefoxMsix.FullName)'"
 
     # Create the VHDX file for this version of the package
     $VhdPath = "E:\Temp\MozillaFirefox$($Firefox.Version).vhdx"
-    Write-Msg -Msg "Creating VHDX file: VhdPath"
+    Write-Msg -Msg "Creating VHDX file: '$VhdPath'"
     New-VHD -SizeBytes 512MB -Path $VhdPath -Dynamic -Confirm:$false
     $VhdObject = Mount-VHD $VhdPath -PassThru
     $Disk = Initialize-Disk -PassThru -Number $VhdObject.Number
@@ -54,7 +54,7 @@ process {
     Format-Volume -FileSystem "NTFS" -DriveLetter $Partition.DriveLetter -Force -Confirm:$false 
 
     # Unpack the package to the disk
-    Write-Msg -Msg "Unpacking $($FirefoxMsix.FullName) to $($Partition.DriveLetter):\MozillaFirefox"
+    Write-Msg -Msg "Unpacking '$($FirefoxMsix.FullName)' to '$($Partition.DriveLetter):\MozillaFirefox'"
     & "E:\Temp\msixmgr\x64\msixmgr.exe" -Unpack -PackagePath $FirefoxMsix.FullName -destination "$($Partition.DriveLetter):\MozillaFirefox" -ApplyACLs
 
     # Dismount the VHDX file
