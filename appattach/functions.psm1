@@ -70,3 +70,39 @@ function Get-MsixMgr {
     }
 }
 #endregion
+
+function Get-MicrosoftVCLibsDesktopAppx {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String[]] $Url = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx",
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ if (Test-Path -Path $_ -PathType "Container") { $true } else { throw "Path not found: '$_'" } })]
+        [System.String] $Path = "$Env:Temp\VcLibs"
+    )
+
+    process {
+        foreach ($Item in $Url) {
+            if (Test-Path -Path $Path -PathType "Leaf") {
+                Write-Msg -Msg "Create path: '$Path'"
+                New-Item -Path $Path -ItemType "Container" -Force -ErrorAction "Stop" | Out-Null
+            }
+            try {
+                $params = @{
+                    Uri             = $Item
+                    OutFile         = "$Path\$(Split-Path -Path $Item -Leaf)"
+                    UseBasicParsing = $true
+                }
+                Write-Msg -Msg "Download from: '$Item'"
+                Invoke-WebRequest @params
+                Write-Output -InputObject $(Get-Item -Path "$Path\$(Split-Path -Path $Item -Leaf)")
+            }
+            catch {
+                throw $_
+            }
+        }
+    }
+}
