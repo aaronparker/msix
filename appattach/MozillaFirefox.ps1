@@ -1,33 +1,20 @@
 #Requires -Modules Evergreen
-using namespace System.Management.Automation
 <#
     Download the latest Mozilla Firefox version in MSIX format and convert into MSIX app attach.
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript({ if (Test-Path -Path $_ -PathType "Container") { $true } else { throw "Path not found: '$_'" } })]
+    [System.String] $Path = "E:\Temp"
+)
 
 begin {
-    function Write-Msg ($Msg) {
-        $Message = [HostInformationMessage]@{
-            Message         = "[$(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')]"
-            ForegroundColor = "Black"
-            BackgroundColor = "DarkCyan"
-            NoNewline       = $true
-        }
-        $params = @{
-            MessageData       = $Message
-            InformationAction = "Continue"
-            Tags              = "Microsoft365"
-        }
-        Write-Information @params
-        $params = @{
-            MessageData       = " $Msg"
-            InformationAction = "Continue"
-            Tags              = "Microsoft365"
-        }
-        Write-Information @params
-    }
+    # Import functions
+    Import-Module -Name "$PSScriptRoot\functions.psm1"
+    $MsixMgrBin = Get-MsixMgr
 }
 
 process {
@@ -41,11 +28,11 @@ process {
     }
     $Firefox = Get-EvergreenApp @params | Where-Object { $_.Architecture -eq "x64" -and $_.Channel -eq "LATEST_FIREFOX_VERSION" -and $_.Language -eq "en-GB" -and $_.Type -eq "msix" }
     Write-Msg -Msg "Found version: $($Firefox.Version)"
-    $FirefoxMsix = $Firefox | Save-EvergreenApp -Path "E:\Temp\Firefox"
+    $FirefoxMsix = $Firefox | Save-EvergreenApp -Path "$Path\Firefox"
     Write-Msg -Msg "Saved to: '$($FirefoxMsix.FullName)'"
 
     # Create the VHDX file for this version of the package
-    $VhdPath = "E:\Temp\MozillaFirefox$($Firefox.Version).vhdx"
+    $VhdPath = "$Path\MozillaFirefox$($Firefox.Version).vhdx"
     Write-Msg -Msg "Creating VHDX file: '$VhdPath'"
     New-VHD -SizeBytes 512MB -Path $VhdPath -Dynamic -Confirm:$false
     $VhdObject = Mount-VHD $VhdPath -PassThru
@@ -55,7 +42,7 @@ process {
 
     # Unpack the package to the disk
     Write-Msg -Msg "Unpacking '$($FirefoxMsix.FullName)' to '$($Partition.DriveLetter):\MozillaFirefox'"
-    & "E:\Temp\msixmgr\x64\msixmgr.exe" -Unpack -PackagePath $FirefoxMsix.FullName -destination "$($Partition.DriveLetter):\MozillaFirefox" -ApplyACLs
+    & $MsixMgrBin -Unpack -PackagePath $FirefoxMsix.FullName -Destination "$($Partition.DriveLetter):\MozillaFirefox" -ApplyACLs
 
     # Dismount the VHDX file
     Dismount-VHD -Path $VhdPath
