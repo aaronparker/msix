@@ -37,7 +37,7 @@ process {
         if ($App.AppParams) {
             $params.AppParams = $App.AppParams
         }
-        $AppDetails = Get-EvergreenApp -Name @params
+        $AppDetails = Get-EvergreenApp @params
         if ($App.Filter) {
             $AppDetails = $AppDetails | Where-Object -FilterScript $App.Filter
         }
