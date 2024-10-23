@@ -15,19 +15,19 @@ param(
     [System.String] $Apps = "./apps.csv"
 )
 
-begin {
-    # Read the input CSV file
-    $Apps = Import-Csv -Path $Apps -ErrorAction "Stop"
-    
+begin {    
     # Import functions
     Import-Module -Name "$PSScriptRoot\functions.psm1"
 
     # Get the MsixMgr binary
     $MsixMgrBin = Get-MsixMgr
+
+    # Read the input CSV file
+    $AppsList = Import-Csv -Path $Apps -ErrorAction "Stop"
 }
 
 process {
-    foreach ($App in $Apps) {
+    foreach ($App in $AppsList) {
 
         # Find the latest $App version in MSIX format and download
         Write-Msg -Msg "Find details for: '$($App.Name)'"
