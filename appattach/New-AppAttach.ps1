@@ -17,7 +17,7 @@ param(
 
 begin {
     # Read the input CSV file
-    $Apps = Import-Csv -Path $Apps
+    $Apps = Import-Csv -Path $Apps -ErrorAction "Stop"
     
     # Import functions
     Import-Module -Name "$PSScriptRoot\functions.psm1"
@@ -30,7 +30,7 @@ process {
     foreach ($App in $Apps) {
 
         # Find the latest $App version in MSIX format and download
-        Write-Msg -Msg "Find details for  $($App.Name)"
+        Write-Msg -Msg "Find details for: '$($App.Name)'"
         $params = @{
             Name = $App.Name
         }
@@ -43,6 +43,7 @@ process {
         }
 
         Write-Msg -Msg "Found version: $($AppDetails.Version)"
+        New-Item -Path "$Path\$($App.Name)" -ItemType "Directory" -Force -ErrorAction "Stop" | Out-Null
         $AppMsix = $AppDetails | Save-EvergreenApp -Path "$Path\$($App.Name)"
         Write-Msg -Msg "Saved to: '$($AppMsix.FullName)'"
 

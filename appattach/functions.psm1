@@ -52,6 +52,7 @@ function Get-MsixMgr {
             Write-Msg -Msg "Create path: '$Path'"
             New-Item -Path $Path -ItemType "Container" -Force -ErrorAction "Stop" | Out-Null
             try {
+                $ProgressPreference = "SilentlyContinue"
                 $params = @{
                     Uri             = "https://aka.ms/msixmgr"
                     OutFile         = "$Path\msixmgr.zip"
